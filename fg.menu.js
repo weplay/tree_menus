@@ -266,15 +266,23 @@ Menu.prototype.flyout = function(container, options) {
 		var allSubLists = $(this).find('ul');		
 		
 		allSubLists.css({ left: linkWidth, width: linkWidth }).hide();
-			
+		
+		var checkMenuHeight = function(el){
+  		if (el.height() > options.maxHeight) { 
+  		  el.addClass('fg-menu-scroll') 
+    		el.css({ height: options.maxHeight });
+  		}
+  	};
+  	
 		$(this).find('a:eq(0)').addClass('fg-menu-indicator').html('<span>' + $(this).find('a:eq(0)').text() + '</span><span class="ui-icon '+options.nextMenuLink+'"></span>').hover(
 			function(){
 				clearTimeout(hideTimer);
 				var subList = $(this).next();
+				checkMenuHeight(subList);
 				if (!fitVertical(subList, $(this).offset().top)) { subList.css({ top: 'auto', bottom: 0 }); };
 				if (!fitHorizontal(subList, $(this).offset().left + 100)) { subList.css({ left: 'auto', right: linkWidth, 'z-index': 999 }); };
 				showTimer = setTimeout(function(){
-					subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');	
+					subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');
 				}, 300);	
 			},
 			function(){
