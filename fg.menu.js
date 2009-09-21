@@ -67,7 +67,8 @@ function Menu(caller, options){
 		flyOutOnState: 'ui-state-default',
 		nextMenuLink: 'ui-icon-triangle-1-e', // class to style the link (specifically, a span within the link) used in the multi-level menu to show the next level
 		topLinkText: 'All',
-		nextCrumbLink: 'ui-icon-carat-1-e'	
+		nextCrumbLink: 'ui-icon-carat-1-e',
+		onChoose: null	
 	}, options);
 	
 	var killAllMenus = function(){
@@ -241,11 +242,13 @@ function Menu(caller, options){
 		menu.menuExists = true;
 	};
 	
-	this.chooseItem = function(item){
+	this.chooseItem = function(item) {
 		menu.kill();
-		// edit this for your own custom function/callback:
-		$('#menuSelection').text($(item).text());	
-		// location.href = $(item).attr('href');
+		if (options.onChoose) {
+		  options.onChoose.call(item);
+		} else {
+		  $('#menu_selection').text($(item).text());	
+		}
 	};
 };
 
