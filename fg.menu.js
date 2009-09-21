@@ -25,7 +25,7 @@ $.fn.menu = function(options){
 	})	
 	.click(function(){
 		if (m.menuOpen == false) { m.showMenu(); }
-		else { m.kill(); };
+    else { m.kill(); };
 		return false;
 	});	
 };
@@ -73,7 +73,7 @@ function Menu(caller, options){
 	
 	var killAllMenus = function(){
 		$.each(allUIMenus, function(i){
-			if (allUIMenus[i].menuOpen) { allUIMenus[i].kill(); };	
+      if (allUIMenus[i].menuOpen) { allUIMenus[i].kill(); }; 
 		});
 	};
 	
@@ -99,11 +99,14 @@ function Menu(caller, options){
 
 	this.showMenu = function(){
 		killAllMenus();
-		if (!menu.menuExists) { menu.create() };
+		if (!menu.menuExists) { menu.create(); };
 		caller
 			.addClass('fg-menu-open')
 			.addClass(options.callerOnState);
-		container.parent().show().click(function(){ menu.kill(); return false; });
+		container.parent().show().click(function(event){ 
+		  if (!$(event.originalTarget).parent("a").andSelf().filter("a").next().is("ul")) menu.kill(); 
+		  return false; 
+		});
 		container.hide().slideDown(options.showSpeed).find('.fg-menu:eq(0)');
 		menu.menuOpen = true;
 		caller.removeClass(options.loadingState);
@@ -243,7 +246,7 @@ function Menu(caller, options){
 	};
 	
 	this.chooseItem = function(item) {
-		menu.kill();
+    menu.kill();
 		if (options.onChoose) {
 		  options.onChoose.call(item);
 		} else {
@@ -269,30 +272,40 @@ Menu.prototype.flyout = function(container, options) {
 		
 		var checkMenuHeight = function(el){
   		if (el.height() > options.maxHeight) { 
-  		  el.addClass('fg-menu-scroll') 
+  		  el.addClass('fg-menu-scroll');
     		el.css({ height: options.maxHeight });
   		}
   	};
   	
-		$(this).find('a:eq(0)').addClass('fg-menu-indicator').html('<span>' + $(this).find('a:eq(0)').text() + '</span><span class="ui-icon '+options.nextMenuLink+'"></span>').hover(
-			function(){
-				clearTimeout(hideTimer);
-				var subList = $(this).next();
-				checkMenuHeight(subList);
-				if (!fitVertical(subList, $(this).offset().top)) { subList.css({ top: 'auto', bottom: 0 }); };
-				if (!fitHorizontal(subList, $(this).offset().left + 100)) { subList.css({ left: 'auto', right: linkWidth, 'z-index': 999 }); };
-				showTimer = setTimeout(function(){
-					subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');
-				}, 300);	
-			},
-			function(){
-				clearTimeout(showTimer);
-				var subList = $(this).next();
-				hideTimer = setTimeout(function(){
-					subList.removeClass('ui-widget-content').hide(options.showSpeed).attr('aria-expanded', 'false');
-				}, 400);	
-			}
-		);
+  	var menuFlyOut = function(){
+			clearTimeout(hideTimer);
+			var subList = $(this).next();
+			checkMenuHeight(subList);
+			if (!fitVertical(subList, $(this).offset().top)) { subList.css({ top: 'auto', bottom: 0 }); };
+			if (!fitHorizontal(subList, $(this).offset().left + 100)) { subList.css({ left: 'auto', right: linkWidth, 'z-index': 999 }); };
+			showTimer = setTimeout(function(){
+				subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');
+			}, 300);	
+		};
+		
+		var menuFlyIn = function(){
+			clearTimeout(showTimer);
+			var subList = $(this).next();
+			hideTimer = setTimeout(function(){
+				subList.removeClass('ui-widget-content').hide(options.showSpeed).attr('aria-expanded', 'false');
+			}, 400);	
+		};
+		
+		$(this).find('a:eq(0)').addClass('fg-menu-indicator')
+		.html('<span>' + $(this).find('a:eq(0)').text() + '</span><span class="ui-icon '+options.nextMenuLink+'"></span>')
+		.hover(menuFlyOut, menuFlyIn).click(function() {
+		  var subList = $(this).next();
+		  if (subList.hasClass("ui-widget-content")) {
+		    menuFlyIn();
+		  } else {
+  		  menuFlyOut();
+		  }
+		});
 
 		$(this).find('ul a').hover(
 			function(){
@@ -310,7 +323,7 @@ Menu.prototype.flyout = function(container, options) {
 		);	
 	});
 	
-	container.find('a').click(function(){
+	container.find('a:not(.fg-menu-indicator)').click(function(){
 		menu.chooseItem(this);
 		return false;
 	});
@@ -335,7 +348,7 @@ Menu.prototype.drilldown = function(container, options) {
 	breadcrumb.append(crumbDefaultHeader);
 	
 	var checkMenuHeight = function(el){
-		if (el.height() > options.maxHeight) { el.addClass('fg-menu-scroll') };	
+		if (el.height() > options.maxHeight) { el.addClass('fg-menu-scroll'); };	
 		el.css({ height: options.maxHeight });
 	};
 	
@@ -558,11 +571,11 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 function sortBigToSmall(a, b) { return b - a; };
 
 jQuery.fn.getTotalWidth = function(){
-	return $(this).width() + parseInt($(this).css('paddingRight')) + parseInt($(this).css('paddingLeft')) + parseInt($(this).css('borderRightWidth')) + parseInt($(this).css('borderLeftWidth'));
+	return $(this).width() + parseInt($(this).css('paddingRight'),10) + parseInt($(this).css('paddingLeft'),10) + parseInt($(this).css('borderRightWidth'),10) + parseInt($(this).css('borderLeftWidth'),10);
 };
 
 jQuery.fn.getTotalHeight = function(){
-	return $(this).height() + parseInt($(this).css('paddingTop')) + parseInt($(this).css('paddingBottom')) + parseInt($(this).css('borderTopWidth')) + parseInt($(this).css('borderBottomWidth'));
+	return $(this).height() + parseInt($(this).css('paddingTop'),10) + parseInt($(this).css('paddingBottom'),10) + parseInt($(this).css('borderTopWidth'),10) + parseInt($(this).css('borderBottomWidth'),10);
 };
 
 function getScrollTop(){
@@ -589,12 +602,12 @@ function getWindowWidth(){
 	leftOffset / topOffset = optional parameter if the offset cannot be calculated (i.e., if the object is in the DOM but is set to display: 'none') */
 	
 function fitHorizontal(el, leftOffset){
-	var leftVal = parseInt(leftOffset) || $(el).offset().left;
+	var leftVal = parseInt(leftOffset,10) || $(el).offset().left;
 	return (leftVal + $(el).width() <= getWindowWidth() + getScrollLeft() && leftVal - getScrollLeft() >= 0);
 };
 
 function fitVertical(el, topOffset){
-	var topVal = parseInt(topOffset) || $(el).offset().top;
+	var topVal = parseInt(topOffset,10) || $(el).offset().top;
 	return (topVal + $(el).height() <= getWindowHeight() + getScrollTop() && topVal - getScrollTop() >= 0);
 };
 
