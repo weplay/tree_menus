@@ -270,18 +270,10 @@ Menu.prototype.flyout = function(container, options) {
 		
 		allSubLists.css({ left: linkWidth, width: linkWidth }).hide();
 		
-		var checkMenuHeight = function(el){
-  		if (el.height() > options.maxHeight) { 
-  		  el.addClass('fg-menu-scroll');
-    		el.css({ height: options.maxHeight });
-  		}
-  	};
-  	
   	var menuFlyOut = function(){
 			clearTimeout(hideTimer);
-			var subList = $(this).next();
-			checkMenuHeight(subList);
-			if (!fitVertical(subList, $(this).offset().top)) { subList.css({ top: 'auto', bottom: 0 }); };
+			var subList = $(this).next(), offsetTop = $(this).offset().top;
+			if (!fitVertical(subList, offsetTop)) subList.css({ top: -offsetTop, bottom: 'auto' });
 			if (!fitHorizontal(subList, $(this).offset().left + 100)) { subList.css({ left: 'auto', right: linkWidth, 'z-index': 999 }); };
 			showTimer = setTimeout(function(){
 				subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');
@@ -298,14 +290,7 @@ Menu.prototype.flyout = function(container, options) {
 		
 		$(this).find('a:eq(0)').addClass('fg-menu-indicator')
 		.html('<span>' + $(this).find('a:eq(0)').text() + '</span><span class="ui-icon '+options.nextMenuLink+'"></span>')
-		.hover(menuFlyOut, menuFlyIn).click(function() {
-		  var subList = $(this).next();
-		  if (subList.hasClass("ui-widget-content")) {
-		    menuFlyIn();
-		  } else {
-  		  menuFlyOut();
-		  }
-		});
+		.hover(menuFlyOut, menuFlyIn);
 
 		$(this).find('ul a').hover(
 			function(){
