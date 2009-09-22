@@ -51,6 +51,7 @@ function Menu(caller, options){
 			directionV: 'down', 
 			detectH: true, // do horizontal collision detection  
 			detectV: true, // do vertical collision detection
+			fitVertical: true,
 			linkToFront: false
 		},
 		showSpeed: 200, // show/hide speed in milliseconds
@@ -273,7 +274,7 @@ Menu.prototype.flyout = function(container, options) {
   	var menuFlyOut = function(){
 			clearTimeout(hideTimer);
 			var subList = $(this).next(), offsetTop = $(this).offset().top;
-			if (!fitVertical(subList, offsetTop)) subList.css({ top: -offsetTop, bottom: 'auto' });
+			if (options.fitVertical && !fitVertical(subList, offsetTop)) subList.css({ top: 'auto', bottom: 0 });
 			if (!fitHorizontal(subList, $(this).offset().left + 100)) { subList.css({ left: 'auto', right: linkWidth, 'z-index': 999 }); };
 			showTimer = setTimeout(function(){
 				subList.addClass('ui-widget-content').show(options.showSpeed).attr('aria-expanded', 'true');
@@ -591,7 +592,7 @@ function fitHorizontal(el, leftOffset){
 	return (leftVal + $(el).width() <= getWindowWidth() + getScrollLeft() && leftVal - getScrollLeft() >= 0);
 };
 
-function fitVertical(el, topOffset){
+function fitVertical(el, topOffset) { 
 	var topVal = parseInt(topOffset,10) || $(el).offset().top;
 	return (topVal + $(el).height() <= getWindowHeight() + getScrollTop() && topVal - getScrollTop() >= 0);
 };
