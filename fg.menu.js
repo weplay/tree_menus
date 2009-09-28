@@ -105,7 +105,7 @@ function Menu(caller, options){
 			.addClass('fg-menu-open')
 			.addClass(options.callerOnState);
 		container.parent().show().click(function(event){ 
-		  if (!$(event.originalTarget).parent("a").andSelf().filter("a").next().is("ul")) menu.kill(); 
+      if (!$(event.target).parent("a").andSelf().filter("a").next().is("ul")) menu.kill(); 
 		  return false; 
 		});
 		container.hide().slideDown(options.showSpeed).find('.fg-menu:eq(0)');
