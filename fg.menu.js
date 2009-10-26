@@ -11,14 +11,12 @@ Dual licensed under the MIT (filamentgroup.com/examples/mit-license.txt) and GPL
 --------------------------------------------------------------------*/
 
 
-var allUIMenus = [];
-
 $.fn.menu = function(options){
-	var caller = this;
-	var options = options;
-	var m = new Menu(caller, options);	
-	allUIMenus.push(m);
-	
+	var caller = this,
+	    options = options,
+	    m = new Menu(caller, options);
+	Menu.addInstance(m);
+		
 	$(this)
 	.mousedown(function(){
 		if (!m.menuOpen) { m.showLoading(); };
@@ -30,15 +28,25 @@ $.fn.menu = function(options){
 	});	
 };
 
+$.fn.menuPosition = function() {
+  var caller = this,
+  instances = Menu.getInstances(caller);
+  $.each(instances, function(i, m) { m.setPosition(); });
+};
+
 function Menu(caller, options){
-	var menu = this;
-	var caller = $(caller);
-	var container = $('<div class="fg-menu-container ui-widget ui-widget-content ui-corner-all">'+options.content+'</div>');
-	
-	this.menuOpen = false;
+	var menu = this,
+	    caller = $(caller),
+	    container = $('<div class="fg-menu-container ui-widget ui-widget-content ui-corner-all">'+options.content+'</div>'),
+	    killAllMenus = function(){
+	      Menu.killAll();
+	    };
+
+	this.container  = container;
+	this.caller     = caller;
+	this.menuOpen   = false;
 	this.menuExists = false;
-	
-	var options = jQuery.extend({
+	this.options    = jQuery.extend({
 		content: null,
 		width: 180, // width of menu container, must be set or passed in to calculate widths of child menus
 		maxHeight: 180, // max height of menu (if a drilldown: height does not include breadcrumb)
@@ -71,12 +79,7 @@ function Menu(caller, options){
 		nextCrumbLink: 'ui-icon-carat-1-e',
 		onChoose: null	
 	}, options);
-	
-	var killAllMenus = function(){
-		$.each(allUIMenus, function(i){
-      if (allUIMenus[i].menuOpen) { allUIMenus[i].kill(); }; 
-		});
-	};
+	options = this.options;
 	
 	this.kill = function(){
 		caller
@@ -469,21 +472,26 @@ Menu.prototype.drilldown = function(container, options) {
 		- detectH/V: detect the viewport horizontally / vertically
 		- linkToFront: copy the menu link and place it on top of the menu (visual effect to make it look like it overlaps the object) */
 
-Menu.prototype.setPosition = function(widget, caller, options) { 
-	var el = widget;
-	var referrer = caller;
-	var dims = {
-		refX: referrer.offset().left,
-		refY: referrer.offset().top,
-		refW: referrer.getTotalWidth(),
-		refH: referrer.getTotalHeight()
-	};	
-	var options = options;
-	var xVal, yVal;
+Menu.prototype.setPosition = function(widget, caller, options) {
+	var el = widget || this.container,
+	    referrer = caller || $(this.caller),
+      dims = {
+        refX: referrer.offset().left,
+        refY: referrer.offset().top,
+        refW: referrer.getTotalWidth(),
+        refH: referrer.getTotalHeight()
+      },
+      options = options || this.options,
+      xVal, yVal;
 	
-	var helper = $('<div class="positionHelper"></div>');
-	helper.css({ position: 'absolute', left: dims.refX, top: dims.refY, width: dims.refW, height: dims.refH });
-	el.wrap(helper);
+	var helper = $(".positionHelper");
+	if($(".positionHelper").length) {
+	  helper.css({ position: 'absolute', left: dims.refX, top: dims.refY, width: dims.refW, height: dims.refH });
+	} else {
+  	helper = $('<div class="positionHelper"></div>');
+  	helper.css({ position: 'absolute', left: dims.refX, top: dims.refY, width: dims.refW, height: dims.refH });
+  	el.wrap(helper);
+	}
 	
 	// get X pos
 	switch(options.positionOpts.posX) {
@@ -551,6 +559,23 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 	};
 };
 
+Menu.allUIMenus = [];
+
+Menu.killAll = function() {
+  $.each(Menu.allUIMenus, function(i, m){
+    if (m.menuOpen) { m.kill(); }; 
+  });
+};
+
+Menu.addInstance = function(menu) {
+  Menu.allUIMenus.push(menu);
+};
+
+Menu.getInstances = function(caller) {
+  return $.each(Menu.allUIMenus, function(i, m){
+    if (m.caller == caller) return m; 
+  });
+};
 
 /* Utilities to sort and find viewport dimensions */
 
