@@ -106,7 +106,7 @@ function Menu(caller, options){
 	this.showMenu = function(){
 		killAllMenus();
 		if (!menu.menuExists) { menu.create(); };
-		menu.setPosition(container, caller, options);
+		menu.setPosition();
 
 		caller
 			.addClass('fg-menu-open')
@@ -475,29 +475,31 @@ Menu.prototype.drilldown = function(container, options) {
 		- detectH/V: detect the viewport horizontally / vertically
 		- linkToFront: copy the menu link and place it on top of the menu (visual effect to make it look like it overlaps the object) */
 
-Menu.prototype.setPosition = function(widget, caller, options) {
-	var el = widget || this.container,
-	    referrer = caller || $(this.caller),
+Menu.prototype.setPosition = function() {
+	var el = this.container,
+	    referrer = this.caller,
+	    options = this.options,
       dims = {
         refX: referrer.offset().left,
         refY: referrer.offset().top,
         refW: referrer.getTotalWidth(),
         refH: referrer.getTotalHeight()
       },
-      options = options || this.options,
-      xVal, yVal;
-
-	var helper = $(".positionHelper");
-	if($(".positionHelper").length) {
+      helperCss = {
+        position: 'absolute',
+        left: dims.refX,
+        top: dims.refY,
+        width: dims.refW,
+        height: dims.refH
+      },
+      helper = $(".positionHelper"),
+      xVal, yVal, elOffsetX, elOffsetY;
+      
+	if(helper.length) {
+	  helper.css(helperCss);
 	} else {
   	helper = $('<div class="positionHelper"></div>');
-  	helper.css({
-      position: 'absolute',
-      left: dims.refX,
-      top: dims.refY,
-      width: dims.refW,
-      height: dims.refH
-    });
+  	helper.css(helperCss);
   	el.wrap(helper);
 	}
 
@@ -524,17 +526,19 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 	// add the offsets (zero by default)
 	xVal += options.positionOpts.offsetX;
 	yVal += options.positionOpts.offsetY;
-
+	
 	// position the object vertically
 	if (options.positionOpts.directionV == 'up') {
+  	elOffsetY = dims.refY - el.height();
 		el.css({ top: 'auto', bottom: yVal });
-		if (options.positionOpts.detectV && !fitVertical(el)) {
+		if (options.positionOpts.detectV && !fitVertical(el, elOffsetY)) {
 			el.css({ bottom: 'auto', top: yVal });
 		}
 	}
 	else {
+  	elOffsetY = yVal + dims.refY;
 		el.css({ bottom: 'auto', top: yVal });
-		if (options.positionOpts.detectV && !fitVertical(el)) {
+		if (options.positionOpts.detectV && !fitVertical(el, elOffsetY)) {
 			el.css({ top: 'auto', bottom: yVal });
 		}
 	};
@@ -542,13 +546,13 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 	// and horizontally
 	if (options.positionOpts.directionH == 'left') {
 		el.css({ left: 'auto', right: xVal });
-		if (options.positionOpts.detectH && !fitHorizontal(el)) {
+		if (options.positionOpts.detectH && !fitHorizontal(el, xVal + dims.refX)) {
 			el.css({ right: 'auto', left: xVal });
 		}
 	}
 	else {
 		el.css({ right: 'auto', left: xVal });
-		if (options.positionOpts.detectH && !fitHorizontal(el)) {
+		if (options.positionOpts.detectH && !fitHorizontal(el, xVal + dims.refX)) {
 			el.css({ left: 'auto', right: xVal });
 		}
 	};
@@ -627,7 +631,6 @@ function fitHorizontal(el, leftOffset){
 
 function fitVertical(el, topOffset) {
 	var topVal = parseInt(topOffset,10) || $(el).offset().top;
-
 	return (topVal + $(el).height() <= getWindowHeight() + getScrollTop() && topVal - getScrollTop() >= 0);
 };
 
