@@ -12,20 +12,26 @@ Dual licensed under the MIT (filamentgroup.com/examples/mit-license.txt) and GPL
 
 
 $.fn.menu = function(options){
-	var caller = this,
-	    options = options,
-	    m = new Menu(caller, options);
-	Menu.addInstance(m);
-
-	$(this)
-	.mousedown(function(){
-		if (!m.menuOpen) { m.showLoading(); };
-	})
-	.click(function(){
-		if (m.menuOpen == false) { m.showMenu(); }
-    else { m.kill(); };
-		return false;
-	});
+  if (options == 'destroyAll') {
+    Menu.deleteInstances();
+    $(this).unbind();
+    return this;
+  } else {
+  	var caller = this,
+  	    options = options,
+  	    m = new Menu(caller, options);
+  	Menu.addInstance(m);
+  	$(this)
+  	.mousedown(function(){
+  		if (!m.menuOpen) { m.showLoading(); };
+  	})
+  	.click(function(){
+  		if (m.menuOpen == false) { m.showMenu(); }
+      else { m.kill(); };
+  		return false;
+  	});
+  	return this;
+  }
 };
 
 function Menu(caller, options){
@@ -52,7 +58,7 @@ function Menu(caller, options){
 	this.caller     = caller;
 	this.menuOpen   = false;
 	this.menuExists = false;
-  
+
 	if (options) {
 	  positionOpts = jQuery.extend(positionOpts, options.positionOpts);
 	  delete options.positionOpts;
@@ -259,6 +265,14 @@ function Menu(caller, options){
 		} else {
 		  $('#menu_selection').text($(item).text());
 		}
+	};
+	
+	this.destroy = function() {
+    this.container.remove();
+	  $("div.positionHelper").remove();
+	  this.caller = null;
+	  this.helper = null;
+	  this.container = null;
 	};
 };
 
@@ -492,15 +506,14 @@ Menu.prototype.setPosition = function() {
         width: dims.refW,
         height: dims.refH
       },
-      helper = $(".positionHelper"),
       xVal, yVal, elOffsetX, elOffsetY;
-      
-	if(helper.length) {
-	  helper.css(helperCss);
+  
+	if(this.helper) {
+	  this.helper.css(helperCss);
 	} else {
-  	helper = $('<div class="positionHelper"></div>');
-  	helper.css(helperCss);
-  	el.wrap(helper);
+  	this.helper = $('<div class="positionHelper"></div>');
+  	this.helper.css(helperCss);
+  	el.wrap(this.helper);
 	}
 
 	// get X pos
@@ -526,7 +539,7 @@ Menu.prototype.setPosition = function() {
 	// add the offsets (zero by default)
 	xVal += options.positionOpts.offsetX;
 	yVal += options.positionOpts.offsetY;
-	
+
 	// position the object vertically
 	if (options.positionOpts.directionV == 'up') {
   	elOffsetY = dims.refY - el.height();
@@ -587,6 +600,14 @@ Menu.getInstances = function(caller) {
   return $.each(Menu.allUIMenus, function(i, m){
     if (m.caller == caller) return m;
   });
+};
+
+Menu.deleteInstances = function() {
+  $.each(Menu.allUIMenus, function(i, m){
+    m.destroy();
+    m = null;
+  });
+  Menu.allUIMenus = [];
 };
 
 /* Utilities to sort and find viewport dimensions */
